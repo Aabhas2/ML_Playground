@@ -5,12 +5,10 @@ import redis
 from app.core.config import settings 
 
 def main(): 
-    redis_conn = redis.Redis.from_url(settings.REDIS_URL) 
     queue_name = settings.RQ_QUEUE 
-
-    with Connection(redis_conn): 
-        worker = Worker([Queue[queue_name]]) 
-        worker.work(with_scheduler=False) 
+    redis_conn = redis.Redis.from_url(settings.REDIS_URL) 
+    worker = Worker([Queue(queue_name, connection=redis_conn)], connection=redis_conn)
+    worker.work()
 
 if __name__ == "__main__": 
     main()
