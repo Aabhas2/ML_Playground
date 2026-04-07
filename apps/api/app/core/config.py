@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(...) 
     REDIS_URL: str = Field(...) 
     RQ_QUEUE: str = Field(default="default")
+    STORAGE_PATH: str = Field(...)
 
     # CSV origins in env 
     CORS_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
