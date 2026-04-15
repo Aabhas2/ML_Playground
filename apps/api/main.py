@@ -19,6 +19,10 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+@app.get("/")
+def root(): 
+    return {"message": "API is runnign"}
+
 @app.on_event("startup") 
 def startup_checks(): 
     # These checks prove our dependencies are reachable. 

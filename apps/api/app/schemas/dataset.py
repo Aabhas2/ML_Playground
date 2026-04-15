@@ -20,7 +20,7 @@ class NumericStats(BaseModel):
     std: Optional[float]
 
 class CategoricalStats(BaseModel): 
-    top_value: Optional[List[TopValue]]
+    top_values: Optional[List[TopValue]]
     unique_count: Optional[int] 
 
 class ColumnProfile(BaseModel): 

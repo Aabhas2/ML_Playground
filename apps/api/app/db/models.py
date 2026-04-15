@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 from sqlalchemy.orm import DeclarativeBase
@@ -20,7 +20,7 @@ class Dataset(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = Column(String, nullable=False)
     file_path = Column(String, nullable=False) 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     profile_data = Column(JSONB, nullable=True)
     current_status = Column(Enum(UploadStatus, name="upload_status"), nullable=False, default=UploadStatus.UPLOADED)
