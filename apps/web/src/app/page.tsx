@@ -1,28 +1,31 @@
 "use client"
 import { useState } from "react";
-import { uploadDataset, getDatasetProfile } from "../lib/api";
-
+import { getDatasetProfile } from "../lib/api";
+import UploadZone from "../components/dataset/UploadZone";
+import { DatasetProfile } from "../lib/types";
 export default function Page() {
-    const [log, setLog] = useState<string | null>(null); 
+    const [profile, setProfile] = useState<DatasetProfile | null>(null); 
 
-    const handleFile = async (e:  React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] 
-        if (!file) return;  
+    async function handleUploadSuccess(datasetId: string) {
+        if (!datasetId) return; 
         try {
-            const res = await uploadDataset(file); 
-            console.log(res); 
-            const profile = await getDatasetProfile(res.dataset_id); 
-            console.log(profile); 
-            setLog(JSON.stringify({res, profile },null, 2)); 
-        } catch (err) {
-            console.error(err); 
-            setLog(String(err)); 
+            const profile = await getDatasetProfile(datasetId); 
+            setProfile(profile); 
+        } catch (error) {
+            console.error("Failed to fetch the profile:", error); 
         }
-    };
+        
+    }
     return (
-        <main>
-            <input type="file" onChange={handleFile} />
-            <pre>{log}</pre>
+        <main className="p-8">
+            <UploadZone onUploadSuccess={handleUploadSuccess}/> 
+            {profile && (
+                <div className="mt-6 p-4 border-l-4 border-green-500 bg-gray-50">
+                    <h2 className="text-xl font-bold">Dataset Loaded</h2>
+                    <p>Rows: <strong>{profile?.row_count}</strong></p>
+                    <p>Columns: <strong>{profile?.column_count}</strong></p>
+                </div>
+            )}
         </main>
     );
 }
