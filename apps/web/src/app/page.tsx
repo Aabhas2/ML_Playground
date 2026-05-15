@@ -3,6 +3,9 @@ import { useState } from "react";
 import { getDatasetProfile } from "../lib/api";
 import UploadZone from "../components/dataset/UploadZone";
 import { DatasetProfile } from "../lib/types";
+import DatasetSummary from "../components/dataset/DatasetSummary";
+import PreviewTable from "../components/dataset/PreviewTable";
+
 export default function Page() {
     const [profile, setProfile] = useState<DatasetProfile | null>(null); 
 
@@ -20,11 +23,14 @@ export default function Page() {
         <main className="p-8">
             <UploadZone onUploadSuccess={handleUploadSuccess}/> 
             {profile && (
-                <div className="mt-6 p-4 border-l-4 border-green-500 bg-gray-50">
-                    <h2 className="text-xl font-bold">Dataset Loaded</h2>
-                    <p>Rows: <strong>{profile?.row_count}</strong></p>
-                    <p>Columns: <strong>{profile?.column_count}</strong></p>
-                </div>
+                <>
+                    <DatasetSummary 
+                        datasetId={profile.dataset_id}
+                        rowCount={profile.row_count}
+                        columnCount={profile.column_count}
+                    />
+                    <PreviewTable previewRows={profile.preview_rows} /> 
+                </>
             )}
         </main>
     );

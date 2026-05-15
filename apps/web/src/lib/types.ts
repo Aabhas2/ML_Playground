@@ -35,6 +35,12 @@ export interface ColumnProfile {
     stats?: NumericStats | CategoricalStats;
 }
 
+export type DatasetSummaryProps = {
+    datasetId: string; 
+    rowCount: number; 
+    columnCount: number; 
+};
+
 export type DataRow = Record<string, string | number | boolean | null>; 
 
 export interface DatasetProfile {
