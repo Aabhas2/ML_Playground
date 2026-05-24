@@ -43,14 +43,14 @@ function getKeyStat(col: ColumnProfile): string {
 
     if (col.detected_type === "Numerical" && isNumericStats(stats)) {
         const mean = stats.mean; 
-        return mean === null ? "mean: -" : `mean: ${mean.toFixed(3)}`; 
+        return mean === null ? "mean: -" : `mean: ${mean.toFixed(3)}`;
     }
 
     // For categorical/text/datetime/boolean we show "top" 
     if (isCategoricalStats(stats)) {
         const top = stats.top_values?.[0]; 
         if (!top) return "top: -"; 
-        return `top: ${top.top_values} (${top.unique_count})`
+        return `top: ${top.value} (${top.count})`;
     }
 
     return "-";  

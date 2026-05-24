@@ -1,7 +1,7 @@
 export interface NumericStats {
     mean: number | null; 
     min: number | null; 
-    max: number | null; 
+    max: number | null;  
     median: number | null; 
     std: number | null; 
 }
@@ -17,8 +17,7 @@ export interface CategoricalValue {
 }
 
 export interface CategoricalStats {
-    type: "categorical"; 
-    top_values: CategoricalValue[]; 
+    top_values: TopValue[]; 
     unique_count: number; 
 }
 
@@ -33,12 +32,12 @@ export type DetectedType = "Numerical" | "Categorical" | "Datetime" | "Text" | "
 export interface ColumnProfile {
     name: string; 
     dtype: string; 
-    detected_type: DetectedType;
+    detected_type: DetectedType; 
     missing_count: number; 
     missing_percentage: number; 
     unique_count: number; 
     nullable: boolean; 
-    stats?: NumericStats | CategoricalStats;
+    stats?: NumericStats | CategoricalStats 
 }
 
 export type DatasetSummaryProps = {
