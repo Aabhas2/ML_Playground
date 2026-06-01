@@ -36,6 +36,12 @@ function isCategoricalStats(stats: ColumnProfile["stats"]): stats is Categorical
     return !!stats && typeof stats === "object" && "top_values" in stats; 
 }
 
+function getMissingBarClass(pct: number): string {
+    if (pct < 0.05) return "bg-emerald-500";  
+    if (pct < 0.2) return "bg-amber-500"; 
+    return "bg-rose-500"; 
+}
+
 function getKeyStat(col: ColumnProfile): string {
     const stats = col.stats; 
 
@@ -62,67 +68,71 @@ export default function ColumnTable({ columns }: ColumnTableProps) {
     }
 
     return (
-        <div className="mt-6 overflow-auto">
-            <table className="min-w-full border-collapse border border-gray-200 dark:border-zinc-700">
-                <thead>
+        <div className="overflow-auto">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
+                <thead className="sticky top-0 bg-zinc-900/80 backdrop-blur">
                     <tr>
-                        <th className="border border-gray-200 px-3 py-2 text-left bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        <th className="px-4 py-3 text-left text-zinc-300">
                             Column
                         </th>
-                        <th className="border border-gray-200 px-3 py-2 text-left bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        <th className="px-4 py-3 text-left text-zinc-300">
                             Type
                         </th>
-                        <th className="border border-gray-200 px-3 py-2 text-left bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        <th className="px-4 py-3 text-left text-zinc-300">
                             Missing %
                         </th>
-                        <th className="border border-gray-200 px-3 py-2 text-left bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        <th className="px-4 py-3 text-left text-zinc-300">
                             Unique
                         </th>
-                        <th className="border border-gray-200 px-3 py-2 text-left bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700">
+                        <th className="px-4 py-3 text-left text-zinc-300">
                             Key Stat
                         </th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {columns.map((col) => {
+                    {columns.map((col, idx) => {
                         const missingPct = Math.max(0,Math.min(1,col.missing_percentage));
                         const missingPctLabel = formatPercent(missingPct);
                         
                         return (
-                            <tr key={col.name}>
-                                <td className="border border-gray-200 px-3 py-2 dark:border-zinc-700">
+                            <tr 
+                                key={col.name}
+                                className={[
+                                    "border-t border-zinc-800", 
+                                    idx % 2 === 0 ? "bg-zinc-900/40" : "bg-zinc-900/20", 
+                                    "hover:bg-zinc-900/60 transition", 
+                                ].join(" ")}
+                            
+                            >
+                                <td className="px-4 py-3">
                                     {col.name}
                                 </td>
-
-                                <td className="border border-gray-200 px-3 py-2 dark:border-zinc-700">
+                                <td className="px-4 py-3">
                                     <span
                                         className={[
-                                            "inline-flex items-center rounded px-2 py-1 text-xs font-medium", 
+                                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", 
                                             getTypeBadgeClasses(col.detected_type), 
                                         ].join(" ")}
                                     >
                                         {col.detected_type}
                                     </span>
                                 </td>
-
-                                <td className="border border-gray-200 px-3 py-2 dark:border-zinc-700">
+                                <td className="px-4 py-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="h-2 w-32 rounded bg-gray-200 dark:bg-zinc-700">
+                                        <div className="h-2 w-32 rounded bg-zinc-800">
                                             <div
-                                                className="h-2 rounded bg-rose-500"
+                                                className={`h-2 rounded ${getMissingBarClass(missingPct)}`}
                                                 style={{ width: `${missingPct * 100}%` }}
                                             />
                                         </div>
-                                        <span className="text-sm tabular-nums">{missingPctLabel}</span>
+                                        <span className="text-sm text-zinc-400 tabular-nums">{missingPctLabel}</span>
                                     </div>
                                 </td>
-
-                                <td className="border border-gray-200 px-3 py-2 dark:border-zinc-700 tabular-nums">
+                                <td className="px-4 py-3 tabular-nums">
                                     {col.unique_count}
                                 </td>
-
-                                <td className="border border-gray-200 px-3 py-2 dark:border-zinc-700">
+                                <td className="px-4 py-3">
                                     {getKeyStat(col)}
                                 </td>
                             </tr>

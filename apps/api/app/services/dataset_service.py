@@ -52,27 +52,29 @@ def profile_dataset(file_path: str) -> dict:
     row_count = len(df) 
     column_count = len(df.columns) 
 
+    df_raw = df.copy()
     df = df.astype(object).where(pd.notnull(df), None)
 
     columns = [] 
     for col in df.columns: 
+        series_raw = df_raw[col]
         series = df[col]
         # missing values 
-        missing_count = series.isnull().sum() 
+        missing_count = series_raw.isnull().sum() 
         missing_percentage = missing_count / len(series) if len(series) > 0 else 0
 
         # Stats 
-        col_type = detect_column_type(series) 
+        col_type = detect_column_type(series_raw) 
 
         stats = None  
 
         if col_type == "Numerical": 
-            val = series.mean() 
+            val = series_raw.mean() 
             mean = float(val) if pd.notna(val) else None 
-            min = float(series.min()) if pd.notna(series.min()) else None
-            max = float(series.max()) if pd.notna(series.max()) else None 
-            median = float(series.median()) if pd.notna(series.median()) else None 
-            std = float(series.std()) if pd.notna(series.std()) else None 
+            min = float(series_raw.min()) if pd.notna(series_raw.min()) else None
+            max = float(series_raw.max()) if pd.notna(series_raw.max()) else None 
+            median = float(series_raw.median()) if pd.notna(series_raw.median()) else None 
+            std = float(series_raw.std()) if pd.notna(series_raw.std()) else None 
             stats = {
                 "mean": mean, 
                 "min": min, 
@@ -81,24 +83,24 @@ def profile_dataset(file_path: str) -> dict:
                 "std": std, 
             }
         elif col_type in {"Categorical", "Text", "Datetime"}:
-            value_counts = series.dropna().astype(str).value_counts().head(5) 
+            value_counts = series_raw.dropna().astype(str).value_counts().head(5) 
             top_values = [{"value": str(idx), "count": int(val)} for idx, val in value_counts.items()]
             stats = {
                 "top_values": top_values, 
-                "unique_count": int(series.nunique(dropna=True)), 
+                "unique_count": int(series_raw.nunique(dropna=True)), 
             }
         elif col_type == "Boolean": 
             stats = {
-                "top_values": [{"value": str(k), "count": int(v)} for k, v in series.value_counts().items()],
-                "unique_count": int(series.nunique()), 
+                "top_values": [{"value": str(k), "count": int(v)} for k, v in series_raw.value_counts().items()],
+                "unique_count": int(series_raw.nunique()), 
             }
 
         # Column object 
         columns.append({
             "name": col, 
-            "dtype": str(series.dtype),
-            "nullable": bool(series.isna().any()),
-            "unique_count": int(series.nunique(dropna=True)),
+            "dtype": str(series_raw.dtype),
+            "nullable": bool(series_raw.isna().any()),
+            "unique_count": int(series_raw.nunique(dropna=True)),
             "detected_type": col_type, 
             "missing_count": int(missing_count),
             "missing_percentage": float(missing_percentage),

@@ -111,7 +111,7 @@ export default function UploadZone({
                 <input 
                     type="file" 
                     id="upload-input"
-                    accept=".csv.xlsx"
+                    accept=".csv,.xlsx"
                     disabled={isUploading}
                     onChange={handleFileChange}
                     className="hidden"

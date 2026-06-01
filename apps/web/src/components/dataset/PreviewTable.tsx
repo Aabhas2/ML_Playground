@@ -14,9 +14,9 @@ export default function PreviewTable({ previewRows }: PreviewTableProps) {
     }
 
     return (
-        <div className="mt-4 overflow-auto">
-            <table className="min-w-full border-collapse border border-gray-200 dark:border-zinc-700">
-                <thead>
+        <div className="overflow-auto">
+            <table className="min-w-full border-separate border-spacing-0 text-sm">
+                <thead className="sticky top-0 bg-zinc-900/80 backdrop-blur">
                     <tr>
                         {columns.map((col) => (
                             <th
@@ -29,8 +29,15 @@ export default function PreviewTable({ previewRows }: PreviewTableProps) {
                     </tr>
                 </thead>
                 <tbody>
-                    {previewRows.map((row, rowIndex ) => (
-                        <tr key={rowIndex}>
+                    {previewRows.map((row, rowIndex) => (
+                        <tr
+                            key={rowIndex}
+                            className={[
+                                "border-t border-zinc-800",
+                                rowIndex % 2 === 0 ? "bg-zinc-900/40" : "bg-zinc-900/20",
+                                "hover:bg-zinc-900/60 transition",
+                            ].join(" ")}
+                        >
                             {columns.map((col) => {
                                 const value = row[col]; 
                                 return (
