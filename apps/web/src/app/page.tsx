@@ -1,18 +1,36 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getDatasetProfile } from "../lib/api";
 import UploadZone from "../components/dataset/UploadZone";
-import { DatasetProfile } from "../lib/types";
+import { ColumnProfile, DatasetProfile } from "../lib/types";
 import DatasetSummary from "../components/dataset/DatasetSummary";
 import PreviewTable from "../components/dataset/PreviewTable";
 import ColumnTable from "../components/dataset/ColumnTable";
 import ColumnInsightCard from "../components/dataset/ColumnInsightCard";
+import ColumnDetailModal from "../components/dataset/ColumnDetailModal";
 
 export default function Page() {
     type PageView = "upload" | "loading" | "profile";
     const [view, setView] = useState<PageView>("upload")
     const [profile, setProfile] = useState<DatasetProfile | null>(null); 
     const [isFetchingProfile, setIsFetchingProfile] = useState(false); 
+    const [selectedColumn, setSelectedColumn] = useState<ColumnProfile | null>(null);  
+    const [columnSearch, setColumnSearch] = useState(""); 
+
+    const filteredColumns =
+        profile?.columns.filter((column) =>
+            column.name.toLowerCase().includes(columnSearch.toLowerCase())
+    ) ?? [];
+
+    useEffect(() => {
+        if (
+            selectedColumn && 
+            !filteredColumns.some((column) => column.name === selectedColumn.name) 
+        ) {
+            setSelectedColumn(null); 
+        }
+    }, [columnSearch, filteredColumns, selectedColumn])
+
 
 
     async function handleUploadSuccess(datasetId: string) {
@@ -23,6 +41,7 @@ export default function Page() {
             const profile = await getDatasetProfile(datasetId); 
             console.log(profile.columns[0]);
             setProfile(profile); 
+            setSelectedColumn(null); 
             setView("profile");
         } catch (error) {
             console.error("Failed to fetch the profile:", error); 
@@ -81,7 +100,7 @@ export default function Page() {
                                 Column types, missing values, uniqueness, and key stats. 
                             </p>
                             <div className="mt-6">
-                                <ColumnTable columns={profile.columns} /> 
+                                <ColumnTable columns={filteredColumns} /> 
                             </div>
                         </section>
 
@@ -91,9 +110,35 @@ export default function Page() {
                             <p className="mt-1 text-sm text-zinc-400">
                                 Detailed stats and top values for each feature. 
                             </p>
+
+                            <div className="mt-6">
+                                <input 
+                                    type="text"
+                                    value={columnSearch} 
+                                    onChange={(e) => setColumnSearch(e.target.value)} 
+                                    placeholder="Search columns..." 
+                                    className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-zinc-500"
+                                />
+
+                                <p className="mt-2 text-sm text-zinc-400">
+                                    Showing {filteredColumns.length} of {profile.columns.length} columns 
+                                </p>
+
+                                {filteredColumns.length === 0 && columnSearch.trim() !== "" && (
+                                    <p className="mt-4 text-sm text-zinc-400">
+                                        No columns match your search. 
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                {profile.columns.map((col) => (
-                                    <ColumnInsightCard key={col.name} column={col} /> 
+                                {filteredColumns.map((col) => (
+                                    <ColumnInsightCard 
+                                    key={col.name} 
+                                    column={col} 
+                                    selected={selectedColumn?.name === col.name} 
+                                    onClick={() => setSelectedColumn(col)}
+                                    /> 
                                 ))}
                             </div>
                         </section>
@@ -109,6 +154,11 @@ export default function Page() {
                                 <PreviewTable previewRows={profile.preview_rows} /> 
                             </div>
                         </section>
+                        <ColumnDetailModal 
+                            column={selectedColumn}
+                            open={!!selectedColumn}
+                            onClose={() => setSelectedColumn(null)}
+                        />
                     </div>
                 )}
             </div>

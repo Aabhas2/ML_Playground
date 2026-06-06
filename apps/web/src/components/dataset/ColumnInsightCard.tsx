@@ -1,79 +1,79 @@
-"use client"; 
+"use client";
 
 import type { ColumnProfile, NumericStats, CategoricalStats } from "@/src/lib/types";
 
 type ColumnInsightCardProps = {
-    column: ColumnProfile; 
+  column: ColumnProfile;
+  onClick?: () => void;
+  selected?: boolean;
 };
 
+// Helper functions (keep these as they are)
 function isNumericStats(stats: ColumnProfile["stats"]): stats is NumericStats {
-    return !!stats && typeof stats === "object" && "mean" in stats;  
+  return !!stats && typeof stats === "object" && "mean" in stats;
 }
 
 function isCategoricalStats(stats: ColumnProfile["stats"]): stats is CategoricalStats {
-    return !!stats && typeof stats === "object" && "top_values" in stats;
+  return !!stats && typeof stats === "object" && "top_values" in stats;
 }
 
 function formatPercent(fraction: number): string {
-    const pct = Math.max(0, Math.min(1, fraction)) * 100; 
-    return `${pct.toFixed(1)}%`; 
+  const pct = Math.max(0, Math.min(1, fraction)) * 100;
+  return `${pct.toFixed(1)}%`;
 }
 
-export default function ColumnInsightCard({ column }: ColumnInsightCardProps) {
-    const stats = column.stats; 
+function getKeyStat(col: ColumnProfile): string {
+  const stats = col.stats;
+  if (!stats) return "—";
 
-    return (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-zinc-600">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <h3 className="text-lg font-semibold wrap-break-word">{column.name}</h3>
-                    <p className="mt-1 text-sm text-zinc-400">
-                        {column.dtype}
-                    </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-200">
-                    {column.detected_type}
-                </span>
-            </div>
+  if (col.detected_type === "Numerical" && isNumericStats(stats)) {
+    return stats.mean === null ? "mean: —" : `mean: ${stats.mean.toFixed(3)}`;
+  }
 
-            <div className="mt-4 flex items-center gap-4 text-sm text-zinc-400">
-                <span>Missing: {formatPercent(column.missing_percentage)}</span>
-                <span>Unique: {column.unique_count}</span>
-            </div>
+  if (isCategoricalStats(stats)) {
+    const top = stats.top_values?.[0];
+    return !top ? "top: —" : `top: ${top.value} (${top.count})`;
+  }
 
-            {/* Numeric Stats */}
-            {column.detected_type === "Numerical" && isNumericStats(stats) && (
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="text-zinc-400">Mean</div>
-                    <div className="text-right">{stats.mean ?? "-"}</div>
-                    <div className="text-zinc-400">Median</div> 
-                    <div className="text-right">{stats.median ?? "-"}</div>
-                    <div className="text-zinc-400">Min</div>
-                    <div className="text-right">{stats.min ?? "-"}</div>
-                    <div className="text-zinc-400">Max</div>
-                    <div className="text-right">{stats.max ?? "-"}</div>
-                    <div className="text-zinc-400">Std</div>
-                    <div className="text-right">{stats.std ?? "-"}</div>
-                </div>
-            )}
+  return "—";
+}
 
-            {/* Categorical/Text/Datetme/Boolean Stats */}
-            {column.detected_type !== "Numerical" && isCategoricalStats(stats) && (
-                <div className="mt-4">
-                    <p className="text-sm text-zinc-400">Top values</p>
-                    <ul className="mt-2 space-y-2 text-sm">
-                        {stats.top_values?.map((tv,idx) => (
-                            <li
-                                key={`${column.name}-${idx}`}
-                                className="flex items-center justify-between rounded-md bg-zinc-900/70 px-3 py-2"
-                            >
-                                <span>{tv.value}</span>
-                                <span className="tabular-nums text-zinc-400">{tv.count}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+// Main component
+export default function ColumnInsightCard({
+  column,
+  onClick,
+  selected,
+}: ColumnInsightCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "w-full rounded-xl border bg-zinc-900/60 p-5 text-left transition",
+        selected ? "border-green-500" : "border-zinc-800 hover:border-zinc-600",
+      ].join(" ")}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="break-words text-lg font-semibold">{column.name}</h3>
+          <p className="mt-1 text-sm text-zinc-400">{column.dtype}</p>
         </div>
-    );
+        <span className="shrink-0 rounded-full bg-zinc-800 px-2.5 py-1 text-xs text-zinc-200">
+          {column.detected_type}
+        </span>
+      </div>
+
+      {/* Metadata Row */}
+      <div className="mt-4 flex items-center gap-4 text-sm text-zinc-400">
+        <span>Missing: {formatPercent(column.missing_percentage)}</span>
+        <span>Unique: {column.unique_count}</span>
+      </div>
+
+      {/* Single Key Stat */}
+      <div className="mt-4 text-sm">
+        <p>{getKeyStat(column)}</p>
+      </div>
+    </button>
+  );
 }
