@@ -55,3 +55,28 @@ export interface DatasetProfile {
     columns: ColumnProfile[]; 
     preview_rows: DataRow[]; 
 }
+
+export interface PipelineOperation {
+    type: string; 
+    params: Record<string, unknown>; 
+}
+
+export interface PipelineResponse {
+    pipeline_id: string; 
+    name: string | null; 
+    dataset_id: string; 
+    operations: PipelineOperation[]; 
+    status: string; 
+    created_at: string; 
+    updated_at: string; 
+}
+
+export interface PipelinePreviewResponse {
+    rows: number; 
+    columns: number; 
+    preview: DataRow[]; 
+}
+
+export interface PipelineCreateResponse {
+    pipeline_id: string; 
+}

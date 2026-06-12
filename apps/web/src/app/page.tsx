@@ -91,6 +91,14 @@ export default function Page() {
                                     columnCount={profile.column_count}
                                 />
                             </div>
+                            <div className="mt-4">
+                                <a 
+                                    href={`/pipeline?dataset_id=${profile.dataset_id}`}
+                                    className="inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                                >
+                                    Build Cleaning Pipeline →
+                                </a>
+                            </div>
                         </section>
 
                         {/* Column Profiling Table */}
