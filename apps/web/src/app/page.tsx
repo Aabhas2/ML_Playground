@@ -8,6 +8,7 @@ import PreviewTable from "../components/dataset/PreviewTable";
 import ColumnTable from "../components/dataset/ColumnTable";
 import ColumnInsightCard from "../components/dataset/ColumnInsightCard";
 import ColumnDetailModal from "../components/dataset/ColumnDetailModal";
+import Link from "next/link";
 
 export default function Page() {
     type PageView = "upload" | "loading" | "profile";
@@ -92,12 +93,12 @@ export default function Page() {
                                 />
                             </div>
                             <div className="mt-4">
-                                <a 
-                                    href={`/pipeline?dataset_id=${profile.dataset_id}`}
+                                <Link
+                                    href={`/playground/pipeline?dataset_id=${profile.dataset_id}`}
                                     className="inline-flex rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
                                 >
                                     Build Cleaning Pipeline →
-                                </a>
+                                </Link>
                             </div>
                         </section>
 

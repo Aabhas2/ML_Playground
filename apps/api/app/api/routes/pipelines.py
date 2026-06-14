@@ -112,3 +112,65 @@ def preview_pipeline(
         raise HTTPException(status_code=400, detail=str(e)) 
     except Exception as e: 
         raise HTTPException(status_code=500, detail=f"Preview failed: {str(e)}")
+
+@router.post("/{pipeline_id}/run", response_model=pipeline_schemas.PipelineRunResponse)
+def run_pipeline(pipeline_id: uuid.UUID, db: Session = Depends(get_db)): 
+    pipeline = crud.get_pipeline(db, pipeline_id) 
+    if not pipeline: 
+        raise HTTPException(status_code=404, detail="Pipeline not found") 
+
+    dataset = crud.get_dataset(db, pipeline.dataset_id) 
+    if not dataset: 
+        raise HTTPException(status_code=404, detail="Dataset not found") 
+
+    # Set status to RUNNING 
+    crud.update_pipeline_status(db, pipeline_id, PipelineStatus.RUNNING) 
+    
+    try: 
+        # Load DataFrame 
+        df, _ = load_data(dataset.file_path) 
+
+        # Extract pipeline operations 
+        operations = [
+            pipeline_schemas.PipelineOperation.model_validate(op) 
+            for op in (pipeline.operations or []) 
+        ]
+
+        # Apply the pipeline transformations 
+        result_df = PipelineService().apply_pipeline(df, operations) 
+
+        # Save transformed DataFrame to storage 
+        from app.core.config import settings 
+        from pathlib import Path 
+        storage_path = Path(settings.STORAGE_PATH) / "datasets" 
+        storage_path.mkdir(parents=True, exist_ok=True) 
+        unique_name = f"{uuid.uuid4()}.csv" 
+        new_file_path = storage_path / unique_name 
+        result_df.to_csv(new_file_path, index=False) 
+
+        # Create a new Dataset entry in the database 
+        new_filename = f"transformed_{dataset.filename}" 
+        new_dataset = crud.create_dataset(db, new_filename, str(new_file_path)) 
+
+        # Profile the new dataset 
+        profiled_data = profile_dataset(str(new_file_path)) 
+        crud.update_dataset_profile(db, new_dataset.id, profiled_data)
+
+        # Update pipeline status to COMPLETED 
+        crud.update_pipeline_status(db, pipeline_id, PipelineStatus.COMPLETED) 
+
+        return {
+            "pipeline_id": pipeline_id, 
+            "new_dataset_id": new_dataset.id, 
+            "rows": len(result_df), 
+            "columns": len(result_df.columns), 
+            "message": "Pipeline run successfully and transformed dataset persisted."
+        }
+
+    except Exception as e: 
+        db.rollback() 
+        # Set status to FAILED in case of errors 
+        crud.update_pipeline_status(db, pipeline_id, PipelineStatus.FAILED) 
+        raise HTTPException(status_code=500, detail=f"Pipeline execution failed: {str(e)}")
+    
+
