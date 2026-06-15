@@ -9,7 +9,11 @@ type OperationType =
     | "fill_missing"
     | "remove_duplicates"
     | "convert_type"
-    | "rename_columns";
+    | "rename_columns"
+    | "one_hot_encode"
+    | "label_encode"
+    | "standard_scale"
+    | "minmax_scale";
 
 type OperationPanelProps = {
     columns: ColumnProfile[];
@@ -102,6 +106,43 @@ export default function OperationPanel({
                         columns_map: { [renameColumn]: newColumnName.trim() }
                     }
                 };
+            } else if (operationType === "one_hot_encode") {
+                if (selectedColumns.length === 0) {
+                    setError("Select at least one column to one-hot encode.")
+                    return;
+                }
+                operation = {
+                    type: "one_hot_encode",
+                    params: { columns: selectedColumns }
+                };
+            } else if (operationType == "label_encode") {
+                if (selectedColumns.length === 0) {
+                    setError("Select at leat one column to label encode.")
+                    return;
+                }
+                operation = {
+                    type: "label_encode",
+                    params: { columns: selectedColumns }
+                };
+            } else if (operationType === "standard_scale") {
+                if (selectedColumns.length === 0) {
+                    setError("Select at least one column to standard scale.")
+                    return;
+                }
+
+                operation = {
+                    type: "standard_scale",
+                    params: { columns: selectedColumns }
+                };
+            } else if (operationType === "minmax_scale") {
+                if (selectedColumns.length === 0) {
+                    setError("Select at least one column to min-max scale.")
+                    return;
+                }
+                operation = {
+                    type: "minmax_scale",
+                    params: { columns: selectedColumns }
+                };
             }
 
             else {
@@ -142,6 +183,10 @@ export default function OperationPanel({
                     <option value="remove_duplicates">Remove Duplicates</option>
                     <option value="convert_type">Convert Type</option>
                     <option value="rename_columns">Rename Column</option>
+                    <option value="one_hot_encode">One-Hot Encode</option>
+                    <option value="label_encode">Label Encode</option>
+                    <option value="standard_scale">Standard Scale</option>
+                    <option value="minmax_scale">Min-Max Scale</option>
                 </select>
             </div>
 
@@ -244,6 +289,90 @@ export default function OperationPanel({
                         placeholder="New column name"
                         className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
                     />
+                </div>
+            )}
+
+            {operationType === "one_hot_encode" && (
+                <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Select columns to encode:</label>
+                    <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-zinc-800 p-3">
+                        {columns
+                            .filter((col) => ["Categorical", "Text", "Boolean"].includes(col.detected_type))
+                            .map((col) => (
+                                <label key={col.name} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedColumns.includes(col.name)}
+                                        onChange={() => toggleColumn(col.name)}
+                                    />
+                                    {col.name} <span className="text-xs text-zinc-500">({col.detected_type})</span>
+                                </label>
+                            ))
+                        }
+                    </div>
+                </div>
+            )}
+
+            {operationType === "label_encode" && (
+                <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Select columns to encode:</label>
+                    <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-zinc-800 p-3">
+                        {columns
+                            .filter((col) => ["Categorical", "Text", "Boolean"].includes(col.detected_type))
+                            .map((col) => (
+                                <label key={col.name} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedColumns.includes(col.name)}
+                                        onChange={() => toggleColumn(col.name)}
+                                    />
+                                    {col.name} <span className="text-xs text-zinc-500">({col.detected_type})</span>
+                                </label>
+                            ))
+                        }
+                    </div>
+                </div>
+            )}
+
+            {operationType === "standard_scale" && (
+                <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Select columns to standard scale:</label>
+                    <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-zinc-800 p-3">
+                        {columns
+                            .filter((col) => col.detected_type === "Numerical")
+                            .map((col) => (
+                                <label key={col.name} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedColumns.includes(col.name)}
+                                        onChange={() => toggleColumn(col.name)}
+                                    />
+                                    {col.name} <span className="text-xs text-zinc-500">({col.detected_type})</span>
+                                </label>
+                            ))
+                        }
+                    </div>
+                </div>
+            )}
+
+            {operationType === "minmax_scale" && (
+                <div className="space-y-2">
+                    <label className="text-sm text-zinc-400">Select columns to min-max scale:</label>
+                    <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-zinc-800 p-3">
+                        {columns
+                            .filter((col) => col.detected_type === "Numerical")
+                            .map((col) => (
+                                <label key={col.name} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedColumns.includes(col.name)}
+                                        onChange={() => toggleColumn(col.name)}
+                                    />
+                                    {col.name} <span className="text-xs text-zinc-500">({col.detected_type})</span>
+                                </label>
+                            ))
+                        }
+                    </div>
                 </div>
             )}
 
