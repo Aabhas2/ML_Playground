@@ -35,6 +35,7 @@ class ColumnProfile(BaseModel):
 
 class DatasetProfile(BaseModel): 
     dataset_id: uuid.UUID 
+    filename: str
     row_count: int 
     column_count: int 
     columns: List[ColumnProfile]

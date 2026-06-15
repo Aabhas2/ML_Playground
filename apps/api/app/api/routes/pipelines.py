@@ -64,7 +64,7 @@ def add_pipeline_operation(
     operation: pipeline_schemas.PipelineOperation, 
     db: Session = Depends(get_db), 
 ): 
-    allowed = {"drop_columns", "fill_missing", "remove_duplicates", "convert_type"} 
+    allowed = {"drop_columns", "fill_missing", "remove_duplicates", "convert_type", "rename_columns"} 
     if operation.type not in allowed: 
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {operation.type}")
     
@@ -77,6 +77,28 @@ def add_pipeline_operation(
 
     return _to_pipeline_response(pipeline) 
 
+@router.delete("/{pipeline_id}/operations/{index}", response_model=pipeline_schemas.PipelineResponse)
+def delete_pipeline_operation(
+    pipeline_id: uuid.UUID, 
+    index: int, 
+    db: Session = Depends(get_db), 
+):
+    pipeline = crud.get_pipeline(db, pipeline_id) 
+    if not pipeline: 
+        raise HTTPException(status_code=404, detail="Pipeline not found") 
+
+    ops = list(pipeline.operations or []) 
+    if index < 0 or index >= len(ops): 
+        raise HTTPException(status_code=400, detail="Invalid operation index") 
+    ops.pop(index)  
+
+    try: 
+        pipeline = crud.update_pipeline_operations(db, pipeline_id, ops) 
+    except ValueError as e: 
+        raise HTTPException(status_code=404, detail=str(e)) 
+
+    return _to_pipeline_response(pipeline)
+ 
 @router.post("/{pipeline_id}/preview", response_model=pipeline_schemas.PipelinePreviewResponse) 
 def preview_pipeline(
     pipeline_id: uuid.UUID, 

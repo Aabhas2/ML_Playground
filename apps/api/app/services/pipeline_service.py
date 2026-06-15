@@ -18,6 +18,8 @@ class PipelineService:
                 df_copy = self.remove_duplicates(df_copy) 
             elif operation_type == "convert_type": 
                 df_copy = self.convert_type(df_copy, params) 
+            elif operation_type == "rename_columns": 
+                df_copy = self.rename_columns(df_copy, params)
             else: 
                 raise ValueError(f"Unsupported pipeline operation: {operation_type}")
         
@@ -110,3 +112,13 @@ class PipelineService:
         
         return df_copy 
 
+    def rename_columns(self, df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame: 
+        columns_map = params.get("columns_map", {}) 
+        if not isinstance(columns_map, dict):
+            raise ValueError("rename_columns expects 'columns_map' to be a dictionary")
+
+        for old_col in columns_map.keys(): 
+            if old_col not in df.columns: 
+                raise ValueError(f"Column '{old_col}' does not exist, cannot rename.") 
+
+        return df.rename(columns=columns_map)

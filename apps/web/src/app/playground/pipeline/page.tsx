@@ -9,6 +9,7 @@ import {
     addPipelineOperation,
     previewPipeline,
     runPipeline,
+    deletePipelineOperation,
 } from "@/src/lib/api";
 import type {
     DatasetProfile,
@@ -34,6 +35,7 @@ export default function PipelinePage() {
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [pageError, setPageError] = useState<string | null>(null);
     const [runMessage, setRunMessage] = useState<string | null>(null);
+    const [runResult, setRunResult] = useState<{ new_dataset_id: string; rows: number; columns: number } | null>(null);
 
     const refreshPreview = useCallback(async (pipelineId: string) => {
         setPreviewLoading(true);
@@ -108,21 +110,35 @@ export default function PipelinePage() {
         }
     }
 
+    async function handleDeleteOperation(index: number) {
+        if (!pipeline) return;
+
+        try {
+            const updated = await deletePipelineOperation(pipeline.pipeline_id, index);
+            setPipeline(updated);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to delete operation");
+        }
+    }
+
     async function handleRun() {
         if (!pipeline) return;
 
         setIsRunning(true);
         setRunMessage(null);
+        setRunResult(null);
 
         try {
-            const result = await runPipeline(pipeline.pipeline_id);
-            setRunMessage(`Pipeline run started/completed: ${JSON.stringify(result)}`);
+            const result = await runPipeline(pipeline.pipeline_id) as any;
+            setRunResult(result);
         } catch (err) {
-            setRunMessage(err instanceof Error ? err.message : "Run failed.");
+            setRunMessage(err instanceof Error ? err.message : "Run failed.")
         } finally {
             setIsRunning(false);
         }
     }
+
+    const totalMissingValues = profile?.columns.reduce((sum, col) => sum + col.missing_count, 0) ?? 0;
 
     if (loading) {
         return (
@@ -151,7 +167,7 @@ export default function PipelinePage() {
                     ← Back to dataset profile
                 </Link>
 
-                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
                     <PipelineHeader
                         pipelineName={pipeline.name ?? "Pipeline"}
                         datasetId={pipeline.dataset_id}
@@ -160,7 +176,50 @@ export default function PipelinePage() {
                         isRunning={isRunning}
                         onRun={handleRun}
                     />
-                    {runMessage && <p className="mt-4 text-sm text-zinc-400">{runMessage}</p>}
+
+                    <div className="grid grid-cols-2 gap-4 rounded-xl border border-zinc-800 bg-zinc-950 p-4 sm:grid-cols-4">
+                        <div>
+                            <span className="block text-xs text-zinc-500 uppercase">Dataset Name</span>
+                            <span className="text-sm font-medium text-zinc-200 truncate block">
+                                {profile.filename}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="block text-xs text-zinc-500 uppercase">Original Rows</span>
+                            <span className="text-sm font-medium text-zinc-200">{profile.row_count}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs text-zinc-500 uppercase">Original Columns</span>
+                            <span className="text-sm font-medium text-zinc-200">{profile.column_count}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs text-zinc-500 uppercase">Missing Values</span>
+                            <span className="text-sm font-medium text-zinc-200">{totalMissingValues}</span>
+                        </div>
+                    </div>
+
+                    {runResult && (
+                        <div className="rounded-xl border border-emerald-800 bg-emerald-950/20 p-4 text-zinc-100 space-y-2">
+                            <h4 className="font-semibold text-emerald-400 flex items-center gap-2">
+                                <span>✅ Pipeline executed successfully</span>
+                            </h4>
+                            <p className="text-sm text-zinc-400">
+                                Transformed dataset created with <strong>{runResult.rows}</strong> rows and <strong>{runResult.columns}</strong> columns.
+                            </p>
+                            <Link
+                                href={`/?dataset_id=${runResult.new_dataset_id}`}
+                                className="inline-flex items-center gap-1 text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:underline"
+                            >
+                                View Cleaned Dataset Profile →
+                            </Link>
+                        </div>
+                    )}
+
+                    {runMessage && (
+                        <div className="rounded-xl border border-rose-900 bg-rose-950/20 p-4 text-rose-400 text-sm">
+                            ❌ {runMessage}
+                        </div>
+                    )}
                 </section>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -185,9 +244,19 @@ export default function PipelinePage() {
                                     {pipeline.operations.map((op, index) => (
                                         <li
                                             key={`${op.type}-${index}`}
-                                            className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm font-mono"
+                                            className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm"
                                         >
-                                            {op.type} {JSON.stringify(op.params)}
+                                            <span className="font-mono text-zinc-300">
+                                                {op.type} {JSON.stringify(op.params)}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteOperation(index)}
+                                                className="text-zinc-500 hover:text-rose-400 transition pl-2"
+                                                title="Delete operation"
+                                            >
+                                                ✕
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -196,10 +265,26 @@ export default function PipelinePage() {
                     </section>
 
                     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-                        <h3 className="text-lg font-semibold">Preview</h3>
-                        <p className="mt-1 text-sm text-zinc-400">
-                            Live preview after each operation (debounced).
-                        </p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold">Preview</h3>
+                                <p className="mt-1 text-sm text-zinc-400">
+                                    Live preview after each operation (debounced).
+                                </p>
+                            </div>
+                            {/* Before vs After stats */}
+                            {preview && (
+                                <div className="text-right text-xs space-y-1">
+                                    <div className="text-zinc-500">
+                                        Columns: <span className="text-zinc-300 font-semibold">{profile.column_count}</span> → <span className="text-emerald-400 font-semibold">{preview.columns}</span>
+                                    </div>
+                                    <div className="text-zinc-500">
+                                        Rows: <span className="text-zinc-300 font-semibold">{profile.row_count}</span> → <span className="text-emerald-400 font-semibold">{preview.rows}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="mt-6">
                             <PipelinePreview
                                 rows={preview?.rows ?? null}

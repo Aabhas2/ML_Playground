@@ -1,13 +1,15 @@
 "use client";
 import { useState } from "react";
 import type { ColumnProfile, PipelineOperation } from "@/src/lib/types";
+import { setRenderedTicks } from "recharts/types/state/renderedTicksSlice";
 
 
 type OperationType =
     | "drop_columns"
     | "fill_missing"
     | "remove_duplicates"
-    | "convert_type";
+    | "convert_type"
+    | "rename_columns";
 
 type OperationPanelProps = {
     columns: ColumnProfile[];
@@ -26,6 +28,8 @@ export default function OperationPanel({
     const [fillStrategy, setFillStrategy] = useState("mean");
     const [fillValue, setFillValue] = useState("");
     const [convertColumn, setConvertColumn] = useState("");
+    const [renameColumn, setRenameColumn] = useState("");
+    const [newColumnName, setNewColumnName] = useState("");
     const [targetType, setTargetType] = useState("int");
     const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +59,18 @@ export default function OperationPanel({
                     setError("Select a column for fill missing.");
                     return;
                 }
+                const colProfile = columns.find(c => c.name === fillColumn);
+                if (colProfile) {
+                    if ((fillStrategy === "mean" || fillStrategy === "median") && colProfile.detected_type !== "Numerical") {
+                        setError(`Strategy '${fillStrategy}' only works on Numerical columns. '${fillColumn}' is of type '${colProfile.detected_type}'.`);
+                        return;
+                    }
+                }
+
+                if (fillStrategy === "constant" && !fillValue.trim()) {
+                    setError("Please specify a constant value to fill missing data.");
+                    return;
+                }
                 operation = {
                     type: "fill_missing",
                     params: {
@@ -65,7 +81,30 @@ export default function OperationPanel({
                 };
             } else if (operationType === "remove_duplicates") {
                 operation = { type: "remove_duplicates", params: {} };
-            } else {
+            } else if (operationType === "rename_columns") {
+                if (!renameColumn) {
+                    setError("Select a column to rename.");
+                    return;
+                }
+                if (!newColumnName.trim()) {
+                    setError("Specify a new name for the column.");
+                    return;
+                }
+
+                if (columns.some(c => c.name === newColumnName.trim() && c.name !== renameColumn)) {
+                    setError(`A column named '${newColumnName}' already exists.`);
+                    return;
+                }
+
+                operation = {
+                    type: "rename_columns",
+                    params: {
+                        columns_map: { [renameColumn]: newColumnName.trim() }
+                    }
+                };
+            }
+
+            else {
                 if (!convertColumn) {
                     setError("Select a column to convert.")
                     return;
@@ -82,6 +121,8 @@ export default function OperationPanel({
             setFillColumn("");
             setFillValue("");
             setConvertColumn("");
+            setRenameColumn("");
+            setNewColumnName("");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to add operation.");
         }
@@ -100,6 +141,7 @@ export default function OperationPanel({
                     <option value="fill_missing">Fill Missing</option>
                     <option value="remove_duplicates">Remove Duplicates</option>
                     <option value="convert_type">Convert Type</option>
+                    <option value="rename_columns">Rename Column</option>
                 </select>
             </div>
 
@@ -178,6 +220,30 @@ export default function OperationPanel({
                         <option value="string">String</option>
                         <option value="category">Category</option>
                     </select>
+                </div>
+            )}
+
+            {operationType === "rename_columns" && (
+                <div className="space-y-3">
+                    <select
+                        value={renameColumn}
+                        onChange={(e) => setRenameColumn(e.target.value)}
+                        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+                    >
+                        <option value="">Select column</option>
+                        {columns.map((col) => (
+                            <option key={col.name} value={col.name}>
+                                {col.name}
+                            </option>
+                        ))}
+                    </select>
+                    <input
+                        type="text"
+                        value={newColumnName}
+                        onChange={(e) => setNewColumnName(e.target.value)}
+                        placeholder="New column name"
+                        className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+                    />
                 </div>
             )}
 

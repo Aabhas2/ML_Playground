@@ -61,4 +61,8 @@ def get_dataset_profile(dataset_id: str, db: Session = Depends(get_db)):
     if not dataset.profile_data: 
         raise HTTPException(status_code=400, detail="Profile not ready") 
     
-    return {**dataset.profile_data, "dataset_id": str(dataset.id)} 
+    return {
+        **dataset.profile_data, 
+        "dataset_id": str(dataset.id), 
+        "filename": dataset.filename
+    }
