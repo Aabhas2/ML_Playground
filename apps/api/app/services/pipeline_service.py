@@ -1,3 +1,4 @@
+from fastapi.routing import serialize_response
 from pydantic import InstanceOf
 from app.schemas.pipeline import PipelineOperation
 from typing import List, Dict, Any 
@@ -30,6 +31,8 @@ class PipelineService:
                 df_copy = self.standard_scale(df_copy, params) 
             elif operation_type == "minmax_scale": 
                 df_copy = self.minmax_scale(df_copy, params) 
+            elif operation_type == "handle_outliers": 
+                df_copy = self.handle_outliers(df_copy, params) 
             else: 
                 raise ValueError(f"Unsupported pipeline operation: {operation_type}")
         
@@ -209,3 +212,38 @@ class PipelineService:
         scaler = MinMaxScaler() 
         df_copy[existing_cols] = scaler.fit_transform(df_copy[existing_cols]) 
         return df_copy
+
+    def handle_outliers(self, df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame: 
+        columns = params.get("columns", []) 
+        if not isinstance(columns, list): 
+            raise ValueError("handle_outliers expects 'columns' to be a list") 
+
+        strategy = params.get("strategy", "iqr") 
+        df_copy = df.copy() 
+
+        for col in columns: 
+            if col in df_copy.columns: 
+                series = df_copy[col] 
+                # Validate the column is numerical 
+                if not pd.api.types.is_numeric_dtype(series): 
+                    raise ValueError(f"Outlier handling only works on numeric columns. '{col}' is not numeric.")
+
+                if strategy == "iqr": 
+                    q1 = series.quantile(0.25) 
+                    q3 =series.quantile(0.75) 
+                    iqr = q3 - q1 
+                    lower_bound = q1 - 1.5 * iqr 
+                    upper_bound = q3 + 1.5 * iqr 
+                    df_copy[col] = series.clip(lower=lower_bound, upper=upper_bound) 
+
+                elif strategy == "percentile": 
+                    lower_pct = float(params.get("lower_percentile", 1)) / 100.0 
+                    upper_pct = float(params.get("upper_percentile", 99)) / 100.0 
+                    lower_bound = series.quantile(lower_pct) 
+                    upper_bound = series.quantile(upper_pct) 
+                    df_copy[col] = series.clip(lower=lower_bound, upper=upper_bound) 
+                
+                else: 
+                    raise ValueError(f"Unsupported outlier handling strategy: {strategy}") 
+
+        return df_copy 

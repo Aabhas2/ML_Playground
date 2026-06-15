@@ -64,7 +64,7 @@ def add_pipeline_operation(
     operation: pipeline_schemas.PipelineOperation, 
     db: Session = Depends(get_db), 
 ): 
-    allowed = {"drop_columns", "fill_missing", "remove_duplicates", "convert_type", "rename_columns", "one_hot_encode", "label_encode", "standard_scale", "minmax_scale"} 
+    allowed = {"drop_columns", "fill_missing", "remove_duplicates", "convert_type", "rename_columns", "one_hot_encode", "label_encode", "standard_scale", "minmax_scale", "handle_outliers"} 
     if operation.type not in allowed: 
         raise HTTPException(status_code=400, detail=f"Unsupported operation type: {operation.type}")
     

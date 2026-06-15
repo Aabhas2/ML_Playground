@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import type { ColumnProfile, PipelineOperation } from "@/src/lib/types";
 import { setRenderedTicks } from "recharts/types/state/renderedTicksSlice";
 
@@ -13,7 +13,8 @@ type OperationType =
     | "one_hot_encode"
     | "label_encode"
     | "standard_scale"
-    | "minmax_scale";
+    | "minmax_scale"
+    | "handle_outliers";
 
 type OperationPanelProps = {
     columns: ColumnProfile[];
@@ -35,6 +36,9 @@ export default function OperationPanel({
     const [renameColumn, setRenameColumn] = useState("");
     const [newColumnName, setNewColumnName] = useState("");
     const [targetType, setTargetType] = useState("int");
+    const [outlierStrategy, setOutlierStrategy] = useState("iqr");
+    const [lowerPercentile, setLowerPercentile] = useState("1");
+    const [upperPercentile, setUpperPercentile] = useState("99");
     const [error, setError] = useState<string | null>(null);
 
     function toggleColumn(columnName: string) {
@@ -143,9 +147,38 @@ export default function OperationPanel({
                     type: "minmax_scale",
                     params: { columns: selectedColumns }
                 };
-            }
-
-            else {
+            } else if (operationType === "handle_outliers") {
+                if (selectedColumns.length === 0) {
+                    setError("Select at least one column to handle outliers.")
+                    return;
+                }
+                const params: Record<string, any> = {
+                    columns: selectedColumns,
+                    strategy: outlierStrategy,
+                };
+                if (outlierStrategy === "percentile") {
+                    const lp = parseFloat(lowerPercentile);
+                    const up = parseFloat(upperPercentile);
+                    if (isNaN(lp) || lp < 0 || lp > 50) {
+                        setError("Lower percentile must be a number between 0 and 50.");
+                        return;
+                    }
+                    if (isNaN(up) || up < 50 || up > 100) {
+                        setError("Upper percentile must be a number between 50 and 100.");
+                        return;
+                    }
+                    if (lp >= up) {
+                        setError("Lower percentile must be less than upper percentile");
+                        return;
+                    }
+                    params.lower_percentile = lp;
+                    params.upper_percentile = up;
+                }
+                operation = {
+                    type: "handle_outliers",
+                    params,
+                };
+            } else {
                 if (!convertColumn) {
                     setError("Select a column to convert.")
                     return;
@@ -164,6 +197,10 @@ export default function OperationPanel({
             setConvertColumn("");
             setRenameColumn("");
             setNewColumnName("");
+            setOutlierStrategy("iqr");
+            setLowerPercentile("1");
+            setUpperPercentile("99");
+
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to add operation.");
         }
@@ -187,6 +224,7 @@ export default function OperationPanel({
                     <option value="label_encode">Label Encode</option>
                     <option value="standard_scale">Standard Scale</option>
                     <option value="minmax_scale">Min-Max Scale</option>
+                    <option value="handle_outliers">Handle Outliers</option>
                 </select>
             </div>
 
@@ -373,6 +411,66 @@ export default function OperationPanel({
                             ))
                         }
                     </div>
+                </div>
+            )}
+
+            {operationType === "handle_outliers" && (
+                <div className="space-y-3">
+                    <label className="text-sm text-zinc-400">Select columns to handle outliers:</label>
+                    <div className="max-h-48 space-y-2 overflow-auto rounded-lg border border-zinc-800 p-3">
+                        {columns
+                            .filter((col) => col.detected_type === "Numerical")
+                            .map((col) => (
+                                <label key={col.name} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedColumns.includes(col.name)}
+                                        onChange={() => toggleColumn(col.name)}
+                                    />
+                                    {col.name} <span className="text-xs text-zinc-500">({col.detected_type})</span>
+                                </label>
+                            ))}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-zinc-400 mb-1">Capping Strategy</label>
+                        <select
+                            value={outlierStrategy}
+                            onChange={(e) => setOutlierStrategy(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+                        >
+                            <option value="iqr">IQR (Interquartile Range - 1.5x)</option>
+                            <option value="percentile">Percentile (e.g. 1st & 99th)</option>
+                        </select>
+                    </div>
+
+                    {outlierStrategy === "percentile" && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs text-zinc-500 mb-1">Lower Percentile</label>
+                                <input
+                                    type="number"
+                                    value={lowerPercentile}
+                                    onChange={(e) => setLowerPercentile(e.target.value)}
+                                    className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+                                    min="0"
+                                    max="50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-zinc-500 mb-1">Upper Percentile</label>
+                                <input
+                                    type="number"
+                                    value={upperPercentile}
+                                    onChange={(e) => setUpperPercentile(e.target.value)}
+                                    className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+                                    min="50"
+                                    max="100"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             )}
 
