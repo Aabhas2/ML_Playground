@@ -75,7 +75,7 @@ export default function ColumnDetailModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="break-words text-2xl font-semibold">{column.name}</h2>
+            <h2 className="wrap-break-word text-2xl font-semibold">{column.name}</h2>
             <p className="mt-1 text-sm text-zinc-400">{column.dtype}</p>
           </div>
 

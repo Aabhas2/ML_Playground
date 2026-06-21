@@ -11,6 +11,7 @@ import ColumnInsightCard from "../components/dataset/ColumnInsightCard";
 import ColumnDetailModal from "../components/dataset/ColumnDetailModal";
 import VisualizationTab from "../components/dataset/VisualizationTab";
 import PipelineTab from "../components/dataset/PipelineTab";
+import ModelTrainingTab from "../components/dataset/ModelTrainingTab";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -21,7 +22,7 @@ function ProfilePageContent() {
     const [isFetchingProfile, setIsFetchingProfile] = useState(false);
     const [selectedColumn, setSelectedColumn] = useState<ColumnProfile | null>(null);
     const [columnSearch, setColumnSearch] = useState("");
-    const [activeTab, setActiveTab] = useState<"overview" | "visualize" | "pipeline">("overview");
+    const [activeTab, setActiveTab] = useState<"overview" | "visualize" | "pipeline" | "model_train">("overview");
 
     const searchParams = useSearchParams();
     const datasetIdParam = searchParams.get("dataset_id");
@@ -123,8 +124,8 @@ function ProfilePageContent() {
                             <button
                                 onClick={() => setActiveTab("overview")}
                                 className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "overview"
-                                        ? "border-emerald-500 text-emerald-400"
-                                        : "border-transparent text-zinc-400 hover:text-zinc-200"
+                                    ? "border-emerald-500 text-emerald-400"
+                                    : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
                             >
                                 Overview & Profiling
@@ -132,8 +133,8 @@ function ProfilePageContent() {
                             <button
                                 onClick={() => setActiveTab("visualize")}
                                 className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "visualize"
-                                        ? "border-emerald-500 text-emerald-400"
-                                        : "border-transparent text-zinc-400 hover:text-zinc-200"
+                                    ? "border-emerald-500 text-emerald-400"
+                                    : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
                             >
                                 Interactive Visualizations
@@ -141,11 +142,20 @@ function ProfilePageContent() {
                             <button
                                 onClick={() => setActiveTab("pipeline")}
                                 className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "pipeline"
-                                        ? "border-emerald-500 text-emerald-400"
-                                        : "border-transparent text-zinc-400 hover:text-zinc-200"
+                                    ? "border-emerald-500 text-emerald-400"
+                                    : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
                             >
                                 Cleaning Pipeline
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("model_train")}
+                                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "model_train"
+                                    ? "border-emerald-500 text-emerald-400"
+                                    : "border-transparent text-zinc-400 hover:text-zinc-200"
+                                    }`}
+                            >
+                                Train Model
                             </button>
                         </div>
 
@@ -252,6 +262,15 @@ function ProfilePageContent() {
                                 onUploadSuccess={handleUploadSuccess}
                             />
                         )}
+
+                        {/* Model Training Tab */}
+                        {activeTab === "model_train" && (
+                            <ModelTrainingTab
+                                datasetId={profile.dataset_id}
+                                columns={profile.columns}
+                            />
+                        )}
+
                     </div>
                 )}
             </div>

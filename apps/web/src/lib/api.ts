@@ -180,3 +180,29 @@ export async function getCorrelationMatrix(
     }
     return response.json();
 }
+
+export async function trainModel(
+    datasetId: string,
+    targetColumn: string,
+    taskType: string,
+    algorithm: string,
+    trainSplit: number = 0.8
+): Promise<any> {
+    const response = await fetch(`${BASE_URL}/models/train`, {
+        method: "POST",
+        headers: { "Content-Type": "applications/json" },
+        body: JSON.stringify({
+            dataset_id: datasetId,
+            target_column: targetColumn,
+            task_type: taskType,
+            algorithm: algorithm,
+            train_split: trainSplit
+        }),
+    });
+    if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || "Failed to train machine learning model");
+    }
+
+    return response.json();
+}
