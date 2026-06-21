@@ -10,6 +10,7 @@ ML Playground is an interactive, web-based sandbox designed for dataset profilin
 * **Framework:** Next.js (React)
 * **Styling:** Vanilla CSS & TailwindCSS (Dark theme, glassmorphism UI)
 * **Charts & Analytics:** Recharts (Interactive histograms, boxplots, scatter plots, feature importance bar charts)
+* **3D Rendering:** Three.js / React Three Fiber (for model structures & high-dimensional decision boundary visualizations)
 
 ### Backend
 * **API Framework:** FastAPI (Python)
@@ -62,6 +63,7 @@ ML Playground is an interactive, web-based sandbox designed for dataset profilin
 
 ## 📝 Roadmap & Future Goals
 
+- [ ] **Interactive 3D Visualizer (Three.js):** Build a real-time, interactive 3D model visualization dashboard (using Three.js / React Three Fiber) to render decision boundaries, multi-dimensional scatter clusters, or decision tree graph nodes.
 - [ ] **Model Download & Export:** Enable downloading trained model files (`.pkl` / `.joblib` / ONNX formats) for local runtime inference.
 - [ ] **Code Generation:** Generate standalone Python scripts reproducing the exact cleaning pipeline and model hyperparameters.
 - [ ] **Batch Deployments:** Integrate a single-click API deployment block to expose the trained model as a REST API endpoint.
