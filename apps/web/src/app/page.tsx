@@ -6,13 +6,11 @@ import UploadZone from "../components/dataset/UploadZone";
 import { ColumnProfile, DatasetProfile } from "../lib/types";
 import DatasetSummary from "../components/dataset/DatasetSummary";
 import PreviewTable from "../components/dataset/PreviewTable";
-import ColumnTable from "../components/dataset/ColumnTable";
 import ColumnInsightCard from "../components/dataset/ColumnInsightCard";
 import ColumnDetailModal from "../components/dataset/ColumnDetailModal";
 import VisualizationTab from "../components/dataset/VisualizationTab";
 import PipelineTab from "../components/dataset/PipelineTab";
 import ModelTrainingTab from "../components/dataset/ModelTrainingTab";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 function ProfilePageContent() {
@@ -94,7 +92,7 @@ function ProfilePageContent() {
 
     return (
         <main className="min-h-screen bg-zinc-950 text-zinc-100">
-            <div className="mx-auto max-w-6xl px-6 py-10 space-y-10">
+            <div className="mx-auto max-w-6xl px-6 py-10 space-y-8">
                 {/* Upload Section */}
                 {view === "upload" && (
                     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
@@ -118,12 +116,46 @@ function ProfilePageContent() {
                 )}
 
                 {view === "profile" && profile && (
-                    <div className="space-y-10">
+                    <div className="space-y-8">
+                        {/* Top Profile Header Info Badge */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-zinc-800/80">
+                            <div>
+                                <h1 className="text-2xl font-bold text-zinc-100 flex items-center gap-3">
+                                    <span>{profile.filename}</span>
+                                    {profile.filename.toLowerCase().includes("cleaned") ? (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                            Transformed Cleaned Version
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-zinc-550/10 text-zinc-400 border border-zinc-750/30">
+                                            Original File
+                                        </span>
+                                    )}
+                                </h1>
+                                <p className="text-xs text-zinc-400 mt-1">
+                                    ID: <span className="font-mono text-zinc-500">{profile.dataset_id}</span> • Size: <span className="font-semibold text-zinc-300">{profile.row_count.toLocaleString()} rows × {profile.column_count} columns</span>
+                                </p>
+                            </div>
+                            <div>
+                                <button
+                                    onClick={() => {
+                                        window.history.pushState({}, "", "/");
+                                        setView("upload");
+                                        setProfile(null);
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-350 hover:text-zinc-100 text-xs font-semibold transition"
+                                >
+                                    Upload Another
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Unified Top Navigation Journey */}
                         <div className="flex border-b border-zinc-800">
                             <button
                                 onClick={() => setActiveTab("overview")}
-                                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "overview"
+                                className={`px-6 py-3 text-sm font-semibold border-b-2 transition ${activeTab === "overview"
                                     ? "border-emerald-500 text-emerald-400"
                                     : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
@@ -132,7 +164,7 @@ function ProfilePageContent() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("visualize")}
-                                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "visualize"
+                                className={`px-6 py-3 text-sm font-semibold border-b-2 transition ${activeTab === "visualize"
                                     ? "border-emerald-500 text-emerald-400"
                                     : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
@@ -141,16 +173,16 @@ function ProfilePageContent() {
                             </button>
                             <button
                                 onClick={() => setActiveTab("pipeline")}
-                                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "pipeline"
+                                className={`px-6 py-3 text-sm font-semibold border-b-2 transition ${activeTab === "pipeline"
                                     ? "border-emerald-500 text-emerald-400"
                                     : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
                             >
-                                Cleaning Pipeline
+                                Pipeline Builder
                             </button>
                             <button
                                 onClick={() => setActiveTab("model_train")}
-                                className={`px-6 py-3 text-sm font-medium border-b-2 transition ${activeTab === "model_train"
+                                className={`px-6 py-3 text-sm font-semibold border-b-2 transition ${activeTab === "model_train"
                                     ? "border-emerald-500 text-emerald-400"
                                     : "border-transparent text-zinc-400 hover:text-zinc-200"
                                     }`}
@@ -177,17 +209,6 @@ function ProfilePageContent() {
                                     </div>
                                 </section>
 
-                                {/* Column Profiling Table */}
-                                <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-                                    <h2 className="text-2xl font-semibold">Column Profiling</h2>
-                                    <p className="mt-1 text-sm text-zinc-400">
-                                        Column types, missing values, uniqueness, and key stats.
-                                    </p>
-                                    <div className="mt-6">
-                                        <ColumnTable columns={filteredColumns} />
-                                    </div>
-                                </section>
-
                                 {/* Column Insights Cards */}
                                 <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
                                     <h2 className="text-2xl font-semibold">Column Insights</h2>
@@ -201,15 +222,15 @@ function ProfilePageContent() {
                                             value={columnSearch}
                                             onChange={(e) => setColumnSearch(e.target.value)}
                                             placeholder="Search columns..."
-                                            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-zinc-500"
+                                            className="w-full rounded-lg border border-zinc-750 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-555 focus:border-zinc-500"
                                         />
 
-                                        <p className="mt-2 text-sm text-zinc-400">
+                                        <p className="mt-2 text-sm text-zinc-450">
                                             Showing {filteredColumns.length} of {profile.columns.length} columns
                                         </p>
 
                                         {filteredColumns.length === 0 && columnSearch.trim() !== "" && (
-                                            <p className="mt-4 text-sm text-zinc-400">
+                                            <p className="mt-4 text-sm text-zinc-450">
                                                 No columns match your search.
                                             </p>
                                         )}
@@ -268,6 +289,7 @@ function ProfilePageContent() {
                             <ModelTrainingTab
                                 datasetId={profile.dataset_id}
                                 columns={profile.columns}
+                                filename={profile.filename}
                             />
                         )}
 

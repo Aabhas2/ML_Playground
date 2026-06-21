@@ -5,7 +5,6 @@ import {
     PipelineResponse,
     PipelinePreviewResponse,
     PipelineOperation,
-
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -13,12 +12,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
 export async function uploadDataset(file: File): Promise<DatasetUploadResponse> {
     const formData = new FormData();
     formData.append("dataset", file);
-
     const response = await fetch(`${BASE_URL}/datasets/upload`, {
         method: "POST",
         body: formData,
     });
-
     if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to upload the dataset! (${response.status}): ${text}`);
@@ -28,11 +25,9 @@ export async function uploadDataset(file: File): Promise<DatasetUploadResponse> 
 
 export async function getDatasetProfile(datasetId: string): Promise<DatasetProfile> {
     const response = await fetch(`${BASE_URL}/datasets/${datasetId}/profile`)
-
     if (!response.ok) {
         throw new Error("Failed to fetch dataset profile")
     }
-
     return response.json();
 }
 
@@ -40,7 +35,7 @@ export async function createPipeline(
     datasetId: string,
     name?: string
 ): Promise<PipelineCreateResponse> {
-    const response = await fetch(`${BASE_URL}/pipelines/`, {
+    const response = await fetch(`${BASE_URL}/pipelines`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dataset_id: datasetId, name }),
@@ -50,7 +45,6 @@ export async function createPipeline(
         const text = await response.text();
         throw new Error(`Failed to create pipeline (${response.status}): ${text}`);
     }
-
     return response.json();
 }
 
@@ -74,12 +68,10 @@ export async function addPipelineOperation(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(operation),
     });
-
     if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to add operation (${response.status}): ${text}`);
     }
-
     return response.json();
 }
 
@@ -92,30 +84,24 @@ export async function previewPipeline(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ max_preview_rows: maxPreviewRows }),
     });
-
     if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to preview pipeline (${response.status}): ${text}`);
     }
-
     return response.json();
 }
-
 export async function runPipeline(pipelineId: string): Promise<unknown> {
     const response = await fetch(`${BASE_URL}/pipelines/${pipelineId}/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
     });
-
     if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to run pipeline (${response.status}): ${text}`);
     }
-
     return response.json();
 }
-
 export async function deletePipelineOperation(
     pipelineId: string,
     index: number
@@ -123,14 +109,12 @@ export async function deletePipelineOperation(
     const response = await fetch(`${BASE_URL}/pipelines/${pipelineId}/operations/${index}`, {
         method: "DELETE",
     });
-
     if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to delete operation (${response.status}): ${text}`)
     }
     return response.json();
 }
-
 export async function getHistogram(
     datasetId: string,
     column: string,
@@ -143,7 +127,6 @@ export async function getHistogram(
     }
     return response.json();
 }
-
 export async function getBoxplot(
     datasetId: string,
     column: string
@@ -155,7 +138,6 @@ export async function getBoxplot(
     }
     return response.json();
 }
-
 export async function getScatterplot(
     datasetId: string,
     colX: string,
@@ -169,7 +151,6 @@ export async function getScatterplot(
     }
     return response.json();
 }
-
 export async function getCorrelationMatrix(
     datasetId: string
 ): Promise<any> {
@@ -180,29 +161,44 @@ export async function getCorrelationMatrix(
     }
     return response.json();
 }
-
 export async function trainModel(
     datasetId: string,
     targetColumn: string,
     taskType: string,
     algorithm: string,
-    trainSplit: number = 0.8
-): Promise<any> {
+    trainSplit: number = 0.8,
+    parameters?: Record<string, any>
+): Promise<{ job_id: string; status: "queued" | "running" | "complete" | "failed" }> {
     const response = await fetch(`${BASE_URL}/models/train`, {
         method: "POST",
-        headers: { "Content-Type": "applications/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             dataset_id: datasetId,
             target_column: targetColumn,
             task_type: taskType,
             algorithm: algorithm,
-            train_split: trainSplit
+            train_split: trainSplit,
+            parameters: parameters || {}
         }),
     });
     if (!response.ok) {
         const text = await response.text()
         throw new Error(text || "Failed to train machine learning model");
     }
-
+    return response.json();
+}
+export async function getModelJobStatus(
+    jobId: string
+): Promise<{
+    job_id: string;
+    status: "queued" | "running" | "complete" | "failed";
+    result: any | null;
+    error_message: string | null;
+}> {
+    const response = await fetch(`${BASE_URL}/models/runs/${jobId}/status`);
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Failed to fetch model training status (${response.status}): ${text}`);
+    }
     return response.json();
 }
