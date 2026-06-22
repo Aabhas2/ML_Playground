@@ -20,7 +20,7 @@ def train_model(req: ModelTrainRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Dataset not found")
     
     # Create ModelJob record with status "queued" 
-    job = crud.create_model_job(db, req.dataset_id, req.model_dump()) 
+    job = crud.create_model_job(db, req.dataset_id, req.model_dump(mode="json")) 
 
     try: 
         # push job to redis queue 
@@ -30,7 +30,7 @@ def train_model(req: ModelTrainRequest, db: Session = Depends(get_db)):
         # Enqueue background job runner 
         queue.enqueue(
             train_job,
-            args=(str(job.id), req.model_dump(), dataset.file_path), 
+            args=(str(job.id), req.model_dump(mode="json"), dataset.file_path), 
             job_id = str(job.id)
         )
         

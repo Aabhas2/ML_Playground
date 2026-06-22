@@ -129,7 +129,9 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
         }
 
         let pollCount = 0;
-        const maxPolls = 150; // Timeout after 5 minutes (150 * 2 seconds)
+        let consecutiveErrors = 0;
+        const maxPolls = 150;        // 5 minutes max (150 × 2s)
+        const maxConsecErrors = 15;  // tolerate 15 consecutive network errors (~30s) before giving up
 
         const interval = setInterval(async () => {
             pollCount++;
@@ -143,6 +145,7 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
 
             try {
                 const data = await getModelJobStatus(jobId);
+                consecutiveErrors = 0; // reset on success
                 setJobStatus(data.status);
 
                 if (data.status === "complete") {
@@ -155,13 +158,15 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
                     clearInterval(interval);
                 }
             } catch (err) {
-                console.error("Polling error:", err);
-                if (pollCount > 10) {
-                    setError("Lost connection to training status server.");
+                consecutiveErrors++;
+                console.warn(`Polling error (${consecutiveErrors}/${maxConsecErrors}):`, err);
+                if (consecutiveErrors >= maxConsecErrors) {
+                    setError("Lost connection to the training server. Check that the API is running.");
                     setLoading(false);
                     setJobStatus("failed");
                     clearInterval(interval);
                 }
+                // else: swallow error and retry on next tick
             }
         }, 2000);
 
