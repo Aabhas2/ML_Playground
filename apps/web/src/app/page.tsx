@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { getDatasetProfile } from "../lib/api";
+import { getDatasetProfile, downloadDataset } from "../lib/api";
 import UploadZone from "../components/dataset/UploadZone";
 import { ColumnProfile, DatasetProfile } from "../lib/types";
 import DatasetSummary from "../components/dataset/DatasetSummary";
@@ -137,7 +137,19 @@ function ProfilePageContent() {
                                     ID: <span className="font-mono text-zinc-500">{profile.dataset_id}</span> • Size: <span className="font-semibold text-zinc-300">{profile.row_count.toLocaleString()} rows × {profile.column_count} columns</span>
                                 </p>
                             </div>
-                            <div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await downloadDataset(profile.dataset_id, profile.filename);
+                                        } catch (err) {
+                                            alert("Failed to download dataset.");
+                                        }
+                                    }}
+                                    className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg border border-emerald-800 bg-emerald-950/20 hover:bg-emerald-900/40 text-emerald-400 hover:text-emerald-350 text-xs font-semibold transition shadow-sm"
+                                >
+                                    Download Dataset
+                                </button>
                                 <button
                                     onClick={() => {
                                         window.history.pushState({}, "", "/");

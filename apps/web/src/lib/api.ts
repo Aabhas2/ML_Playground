@@ -202,3 +202,21 @@ export async function getModelJobStatus(
     }
     return response.json();
 }
+
+export async function downloadDataset(datasetId: string, filename: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/datasets/${datasetId}/download`);
+
+    if (!response.ok) {
+        throw new Error("Failed to download dataset file.");
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+}

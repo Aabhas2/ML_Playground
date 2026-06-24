@@ -8,6 +8,7 @@ import {
     deletePipelineOperation,
     previewPipeline,
     runPipeline,
+    downloadDataset,
 } from "../../lib/api";
 import type { DatasetProfile, PipelineOperation, PipelinePreviewResponse, PipelineResponse } from "../../lib/types";
 import OperationPanel from "../pipeline/OperationPanel";
@@ -238,12 +239,24 @@ export default function PipelineTab({
                     <p className="text-sm text-zinc-300">
                         A clean, versioned dataset has been generated: <strong className="text-white font-mono">{runResult.filename}</strong> with <strong>{runResult.rows}</strong> rows and <strong>{runResult.columns}</strong> columns.
                     </p>
-                    <div>
+                    <div className="flex gap-2">
                         <button
                             onClick={() => onUploadSuccess(runResult.new_dataset_id)}
                             className="inline-flex rounded-lg bg-emerald-800/80 px-4 py-2 text-xs font-medium text-white transition hover:bg-emerald-700"
                         >
                             Open Transformed Profile
+                        </button>
+                        <button
+                            onClick={async () => {
+                                try {
+                                    await downloadDataset(runResult.new_dataset_id, runResult.filename);
+                                } catch (err) {
+                                    alert("Failed to download dataset");
+                                }
+                            }}
+                            className="inline-flex rounded-lg border border-emerald-800 bg-emerald-950/30 px-4 py-2 text-xs font-medium text-emerald-400 transition hover:bg-emerald-900/40"
+                        >
+                            Download Cleaned Dataset
                         </button>
                     </div>
                 </div>

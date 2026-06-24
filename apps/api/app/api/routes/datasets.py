@@ -1,4 +1,5 @@
 from fastapi import UploadFile, File, HTTPException, Depends, APIRouter 
+from fastapi.responses import FileResponse
 from pathlib import Path 
 from sqlalchemy.orm import Session 
 from app.db.models import  UploadStatus
@@ -66,3 +67,21 @@ def get_dataset_profile(dataset_id: str, db: Session = Depends(get_db)):
         "dataset_id": str(dataset.id), 
         "filename": dataset.filename
     }
+
+@router.get("/{dataset_id}/download") 
+def download_dataset(dataset_id: str, db: Session = Depends(get_db)): 
+    # Fetch the dataset record from database 
+    dataset = get_dataset(db, dataset_id) 
+    if not dataset:  
+        raise HTTPException(status_code=404, detail="Dataset not found") 
+
+    # Check if the file is on disk 
+    file_path = Path(dataset.file_path)
+    if not file_path.exists(): 
+        raise HTTPException(status_code=404, detail="Dataset file not found on disk") 
+
+    # Stream the file directly as an attachment with its original filename 
+    return FileResponse(
+        path=file_path,
+        filename=dataset.filename, 
+    )

@@ -92,6 +92,12 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
         }
     }, [taskType]);
 
+    // Clear error and results when configuration changes
+    useEffect(() => {
+        setError(null);
+        setResults(null);
+    }, [targetCol, taskType, algorithm]);
+
     // Initialize/Reset custom hyperparameters when algorithm changes
     useEffect(() => {
         const defaults: Record<string, any> = {};
@@ -303,9 +309,9 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
                                     >
                                         <option value="0.01">0.01 (Weak Regularization)</option>
                                         <option value="0.1">0.1</option>
-                                        <option value="1.0">1.0 (Default)</option>
-                                        <option value="10.0">10.0</option>
-                                        <option value="100.0">100.0 (Strong Regularization)</option>
+                                        <option value="1">1.0 (Default)</option>
+                                        <option value="10">10.0</option>
+                                        <option value="100">100.0 (Strong Regularization)</option>
                                     </select>
                                 </div>
                             )}
@@ -408,8 +414,8 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
                                         >
                                             <option value="0.01">0.01 (Strong Penalization)</option>
                                             <option value="0.1">0.1</option>
-                                            <option value="1.0">1.0 (Default)</option>
-                                            <option value="10.0">10.0 (Weak Penalization)</option>
+                                            <option value="1">1.0 (Default)</option>
+                                            <option value="10">10.0 (Weak Penalization)</option>
                                         </select>
                                     </div>
 
@@ -438,8 +444,8 @@ export default function ModelTrainingTab({ datasetId, columns, filename }: Model
                                             className="w-full rounded-lg border border-zinc-750 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500"
                                         >
                                             <option value="0.1">0.1 (Soft Margin)</option>
-                                            <option value="1.0">1.0 (Default)</option>
-                                            <option value="10.0">10.0 (Hard Margin)</option>
+                                            <option value="1">1.0 (Default)</option>
+                                            <option value="10">10.0 (Hard Margin)</option>
                                         </select>
                                     </div>
 
